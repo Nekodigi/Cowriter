@@ -94,7 +94,7 @@ export default function Page() {
 </div>
 </div>`;
     }
-  }, [type]);
+  }, [h, type, w]);
 
   return (
     <div className="w-full max-w-screen-sm my-4 mx-auto">
