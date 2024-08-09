@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "input is required" }, { status: 400 });
   //use chat api
   const res = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",

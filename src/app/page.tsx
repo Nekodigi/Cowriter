@@ -58,6 +58,12 @@ export default function Home() {
     setNewDraft(data.text);
     setDiffView(false);
   };
+  const onFormat = () => {
+    //replace return with double space and return
+    const formatted = draft.replace(/\n/g, "\n\n");
+    console.log(formatted);
+    setNewDraft(formatted);
+  };
 
   const accept = () => {
     setDraft(newDraft);
@@ -110,6 +116,7 @@ export default function Home() {
               <Button onClick={onFix}>Fix</Button>
               <Button onClick={onAppend}>Append</Button>
               <Button onClick={onEvaluate}>Evaluate</Button>
+              <Button onClick={onFormat}>Format</Button>
             </div>
             <div className="flex flex-col gap-0">
               <Textarea
@@ -143,6 +150,7 @@ export default function Home() {
               <Button onClick={onGenerateArticle}>Generate</Button>
               <Button onClick={onFixArticle}>Fix</Button>
               <Button onClick={onEvaluate}>Evaluate</Button>
+              <Button onClick={onFormat}>Format</Button>
             </div>
             <div className="flex flex-col gap-0">
               <Textarea
