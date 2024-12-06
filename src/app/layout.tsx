@@ -28,8 +28,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <EditorContextProvider>
-            <SiteHeader />
-            {children}
+            <div className="h-screen flex flex-col">
+              <SiteHeader />
+              {children}
+            </div>
           </EditorContextProvider>
         </ThemeProvider>
       </body>

@@ -9,20 +9,20 @@ export async function GET(req: NextRequest) {
   //from query
   const searchParams = req.nextUrl.searchParams;
   const input = searchParams.get("input");
-  const criteria = searchParams.get("criteria");
-  if (!input || !criteria)
+  const query = searchParams.get("query");
+  if (!input || !query)
     return Response.json(
-      { error: "input and criteria is required" },
+      { error: "input and query is required" },
       { status: 400 }
     );
   //use chat api
   const res = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
-      { role: "user", content: `Criteria: ${criteria}` },
+      { role: "user", content: `${query}` },
       {
         role: "user",
-        content: `Evaluate this idea list based on the last criteria. ONLY show my clearly insufficient point and tell me simple list format. Input: ${input}`,
+        content: `${input}`,
       },
     ],
   });
