@@ -1,17 +1,65 @@
 "use client";
 
 import { useEditorContext } from "@/components/contexts/editor";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowUp } from "lucide-react";
+import {
+  ArrowUp,
+  Check,
+  ChevronDown,
+  CircleHelp,
+  Cross,
+  Loader2,
+  Mail,
+  SpellCheck,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import ReactDiffViewer from "react-diff-viewer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { capitalize } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import ReactMarkdown from "react-markdown";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { DialogClose } from "@radix-ui/react-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Home() {
   const {
-    criteria,
+    query,
+    setQuery,
     exemplary,
     guidance,
     draft,
@@ -20,165 +68,171 @@ export default function Home() {
     setArticle,
   } = useEditorContext();
 
+  const [operation, setOperation] = useState<"fix" | "ask">("fix");
   const [newDraft, setNewDraft] = useState("");
-  const [newArticle, setNewArticle] = useState("");
-  const [diffView, setDiffView] = useState(true);
+  const [status, setStatus] = useState<"waiting" | "idle">("idle");
+  const [open, setOpen] = useState(false);
+  const [fixQuery, setFixQuery] = useState(
+    "Please return sentence with correct grammar and spell. Only return result."
+  );
 
   const onFix = async () => {
-    console.log(draft);
-    const res = await fetch(
-      `/api/cowriter/prettier?input=${encodeURIComponent(draft)}`
-    );
-    const data = await res.json();
-    console.log(data.text);
-    setNewDraft(data.text);
-    setDiffView(true);
+    setStatus("waiting");
+    if (!draft) return;
+    try {
+      const res = await fetch(
+        `/api/cowriter/fix?input=${encodeURIComponent(
+          draft
+        )}&query=${encodeURIComponent(fixQuery)}`
+      );
+      const data = await res.json();
+      console.log(data.text);
+      setNewDraft(data.text);
+      setOpen(true);
+      setStatus("idle");
+    } catch (error) {
+      console.error(error);
+      setStatus("idle");
+    }
   };
-  const onAppend = async () => {
-    console.log(draft);
-    const res = await fetch(
-      `/api/cowriter/append?input=${encodeURIComponent(
-        draft
-      )}&criteria=${encodeURIComponent(criteria)}`
-    );
-    const data = await res.json();
-    console.log(data.text);
-    setNewDraft(data.text);
-    setDiffView(true);
-  };
-  const onEvaluate = async () => {
-    console.log(draft);
-    const res = await fetch(
-      `/api/cowriter/evaluate?input=${encodeURIComponent(
-        draft
-      )}&criteria=${encodeURIComponent(criteria)}`
-    );
-    const data = await res.json();
-    console.log(data.text);
-    setNewDraft(data.text);
-    setDiffView(false);
-  };
-  const onFormat = () => {
-    //replace return with double space and return
-    const formatted = draft.replace(/\n/g, "\n\n");
-    console.log(formatted);
-    setNewDraft(formatted);
+  const onAsk = async () => {
+    setStatus("waiting");
+    if (!draft || !query) return;
+    try {
+      const res = await fetch(
+        `/api/cowriter/ask?input=${encodeURIComponent(
+          draft
+        )}&query=${encodeURIComponent(query)}`
+      );
+      const data = await res.json();
+      console.log(data.text);
+      setNewDraft(data.text);
+      setStatus("idle");
+    } catch (error) {
+      console.error(error);
+      setStatus("idle");
+    }
   };
 
   const accept = () => {
     setDraft(newDraft);
   };
-  const onFixArticle = async () => {
-    const res = await fetch(
-      `/api/cowriter/prettier?input=${encodeURIComponent(article)}`
-    );
-    const data = await res.json();
-    console.log(data.text);
-    setNewArticle(data.text);
-    setDiffView(true);
+
+  const EditorElem = (
+    <div className="flex flex-col flex-grow gap-4">
+      <Textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        className="flex-grow resize-none"
+        placeholder="Write something..."
+      />
+      <Input
+        value={operation === "fix" ? fixQuery : query}
+        onChange={(e) =>
+          operation === "fix"
+            ? setFixQuery(e.target.value)
+            : setQuery(e.target.value)
+        }
+        placeholder={
+          operation === "fix" ? "How it should be fixed?" : "Ask a question..."
+        }
+      />
+      <div className="flex justify-end gap-4 mb-4">
+        <div className="flex items-center">
+          {status === "idle" ? (
+            operation === "fix" ? (
+              <Button className={"rounded-r-none gap-4"} onClick={onFix}>
+                <SpellCheck size={20} />
+                Fix
+              </Button>
+            ) : (
+              <Button className={"rounded-r-none gap-4"} onClick={onAsk}>
+                <CircleHelp size={20} />
+                Ask
+              </Button>
+            )
+          ) : (
+            <Button disabled className={"rounded-r-none gap-4"}>
+              <Loader2 className="animate-spin" size={20} />
+              Generating...
+            </Button>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className={"rounded-l-none border-l-0 px-2"}>
+                <ChevronDown size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setOperation("fix")}>
+                Fix
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setOperation("ask");
+                  setNewDraft("");
+                }}
+              >
+                Ask
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </div>
+  );
+
+  const onAccept = () => {
+    setDraft(newDraft);
+    setOpen(false);
   };
-  const onGenerateArticle = async () => {
-    const res = await fetch(
-      `/api/cowriter/generate?input=${encodeURIComponent(
-        article
-      )}&exemplary=${encodeURIComponent(exemplary)}`
-    );
-    const data = await res.json();
-    console.log(data.text);
-    setNewArticle(data.text);
-    setDiffView(true);
-  };
-  const onEvaluateArticle = async () => {
-    const res = await fetch(
-      `/api/cowriter/evaluate?input=${encodeURIComponent(
-        article
-      )}&criteria=${encodeURIComponent(criteria)}`
-    );
-    const data = await res.json();
-    console.log(data.text);
-    setNewArticle(data.text);
-    setDiffView(false);
-  };
-  const acceptArticle = () => {
-    setArticle(newArticle);
+
+  const onReject = () => {
+    setNewDraft(draft);
+    setOpen(false);
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <Tabs defaultValue="draft" className="w-full">
-        <TabsList>
-          <TabsTrigger value="draft">Draft</TabsTrigger>
-          <TabsTrigger value="article">Article</TabsTrigger>
-        </TabsList>
-        <TabsContent value="draft">
-          <div className="flex flex-col gap-4 w-full">
-            <div className="flex gap-4">
-              <Button onClick={onFix}>Fix</Button>
-              <Button onClick={onAppend}>Append</Button>
-              <Button onClick={onEvaluate}>Evaluate</Button>
-              <Button onClick={onFormat}>Format</Button>
-            </div>
-            <div className="flex flex-col gap-0">
-              <Textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                className="h-96"
-              />
-              {/* <p className="whitespace-pre-wrap bg-slate-100 p-4">{newDraft}</p> */}
-              <div className="relative">
-                <Button
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onClick={accept}
-                >
-                  <ArrowUp />
-                </Button>
-                {diffView ? (
-                  <ReactDiffViewer oldValue={draft} newValue={newDraft} />
-                ) : (
-                  <p className="whitespace-pre-wrap bg-slate-100 p-4">
-                    {newDraft}
-                  </p>
-                )}
-              </div>
-            </div>
+    <main className="flex flex-col gap-4 w-full flex-grow my-8 px-8">
+      {operation === "fix" ? (
+        EditorElem
+      ) : (
+        //
+        <div className="flex gap-8 flex-grow">
+          <div className="flex w-1/2">{EditorElem}</div>
+          <div className="flex flex-col w-1/2">
+            <h2 className="scroll-m-20  pb-2 pt-4 text-3xl font-semibold tracking-tight ">
+              Feedback
+            </h2>
+            <ScrollArea className="flex-grow rounded-md border h-[calc(100vh-190px)]">
+              <ReactMarkdown className="markdown flex-grow min-h-0 ">
+                {newDraft}
+              </ReactMarkdown>
+            </ScrollArea>
           </div>
-        </TabsContent>
-        <TabsContent value="article">
-          <div className="flex flex-col gap-4 w-full">
-            <div className="flex gap-4">
-              <Button onClick={onGenerateArticle}>Generate</Button>
-              <Button onClick={onFixArticle}>Fix</Button>
-              <Button onClick={onEvaluate}>Evaluate</Button>
-              <Button onClick={onFormat}>Format</Button>
-            </div>
-            <div className="flex flex-col gap-0">
-              <Textarea
-                value={article}
-                onChange={(e) => setArticle(e.target.value)}
-                className="h-96"
-              />
-              {/* <p className="whitespace-pre-wrap bg-slate-100 p-4">{newDraft}</p> */}
-              <div className="relative">
-                <Button
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onClick={acceptArticle}
-                >
-                  <ArrowUp />
-                </Button>
-                {diffView ? (
-                  <ReactDiffViewer oldValue={article} newValue={newArticle} />
-                ) : (
-                  <p className="whitespace-pre-wrap bg-slate-100 p-4">
-                    {newDraft}
-                  </p>
-                )}
-              </div>
-            </div>
+        </div>
+      )}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="flex flex-col max-w-screen max-h-screen ">
+          <DialogHeader>
+            <DialogTitle>Accept Change?</DialogTitle>
+          </DialogHeader>
+          <div className="flex-grow overflow-y-auto">
+            <ReactDiffViewer oldValue={draft} newValue={newDraft} />
           </div>
-        </TabsContent>
-      </Tabs>
+          <DialogFooter className="justify-end">
+            <Button variant="secondary" className={"gap-4"} onClick={onReject}>
+              <X size={20} />
+              Reject
+            </Button>
+            <Button className={"gap-4"} onClick={onAccept}>
+              <Check size={20} />
+              Accept
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

@@ -3,10 +3,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 export type EditorContextType = {
-  criteria: string;
+  query: string;
   exemplary: string;
   guidance: string;
-  setCriteria: (criteria: string) => void;
+  setQuery: (query: string) => void;
   setExemplary: (exemplary: string) => void;
   setGuidance: (guidance: string) => void;
   draft: string;
@@ -36,23 +36,23 @@ export const EditorContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [criteria, _setCriteria] = useState("");
+  const [query, _setQuery] = useState("");
   const [exemplary, _setExemplary] = useState("");
   const [guidance, _setGuidance] = useState("");
   const [draft, _setDraft] = useState("");
   const [article, _setArticle] = useState("");
 
   useEffect(() => {
-    _setCriteria(localStorage.getItem("criteria") || "");
+    _setQuery(localStorage.getItem("query") || "");
     _setExemplary(localStorage.getItem("exemplary") || "");
     _setGuidance(localStorage.getItem("guidance") || "");
     _setDraft(localStorage.getItem("draft") || "");
     _setArticle(localStorage.getItem("article") || "");
   }, []);
 
-  const setCriteria = (criteria: string) => {
-    _setCriteria(criteria);
-    localStorage.setItem("criteria", criteria);
+  const setQuery = (query: string) => {
+    _setQuery(query);
+    localStorage.setItem("query", query);
   };
   const setExemplary = (exemplary: string) => {
     _setExemplary(exemplary);
@@ -74,10 +74,10 @@ export const EditorContextProvider = ({
   return (
     <EditorProvider
       value={{
-        criteria,
+        query,
         exemplary,
         guidance,
-        setCriteria,
+        setQuery,
         setExemplary,
         setGuidance,
         draft,

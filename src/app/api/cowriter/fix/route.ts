@@ -9,19 +9,19 @@ export async function GET(req: NextRequest) {
   //from query
   const searchParams = req.nextUrl.searchParams;
   const input = searchParams.get("input");
-  if (!input)
-    return Response.json({ error: "input is required" }, { status: 400 });
+  const query = searchParams.get("query");
+  if (!input || !query)
+    return Response.json(
+      { error: "input and query is required" },
+      { status: 400 }
+    );
   //use chat api
   const res = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       {
-        role: "system",
-        content: "You spell and grammar checker. Only return result.",
-      },
-      {
         role: "user",
-        content: "Please return sentence with correct grammar and spell",
+        content: query,
       },
       { role: "user", content: input },
     ],
