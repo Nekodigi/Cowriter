@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/dialog";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "@/components/ui/use-toast";
 
 export default function Home() {
   const {
@@ -86,6 +87,14 @@ export default function Home() {
         )}&query=${encodeURIComponent(fixQuery)}`
       );
       const data = await res.json();
+      // if (data.text === draft) {
+      //   toast({
+      //     title: "Noting to change",
+      //     description: "AI returned exactly the same text",
+      //   });
+      //   console.error("No change detected");
+      //   return;
+      // }
       console.log(data.text);
       setNewDraft(data.text);
       setOpen(true);
